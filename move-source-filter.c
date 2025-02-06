@@ -914,14 +914,14 @@ static obs_properties_t *move_source_properties(void *data)
 	obs_property_set_modified_callback2(p, move_source_changed, data);
 
 	p = obs_properties_add_int(group, S_START_DELAY, obs_module_text("StartDelay"), 0, 10000000, 100);
-	obs_property_int_set_suffix(p, "ms");
+	obs_property_int_set_suffix(p, " ms");
 	obs_properties_t *duration = obs_properties_create();
 	p = obs_properties_add_int(duration, S_DURATION, "", 0, 10000000, 100);
-	obs_property_int_set_suffix(p, "ms");
+	obs_property_int_set_suffix(p, " ms");
 	p = obs_properties_add_group(group, S_CUSTOM_DURATION, obs_module_text("CustomDuration"), OBS_GROUP_CHECKABLE, duration);
 
 	p = obs_properties_add_int(group, S_END_DELAY, obs_module_text("EndDelay"), 0, 10000000, 100);
-	obs_property_int_set_suffix(p, "ms");
+	obs_property_int_set_suffix(p, " ms");
 
 	p = obs_properties_add_list(group, S_EASING_MATCH, obs_module_text("Easing"), OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	prop_list_add_easings(p);
@@ -988,14 +988,14 @@ static obs_properties_t *move_source_properties(void *data)
 	prop_list_add_media_actions(p);
 
 	p = obs_properties_add_int(group, S_MEDIA_ACTION_START_TIME, obs_module_text("MediaAction.Time"), -1000000, 1000000, 100);
-	obs_property_int_set_suffix(p, "ms");
+	obs_property_int_set_suffix(p, " ms");
 
 	p = obs_properties_add_list(group, S_MEDIA_ACTION_END, obs_module_text("MediaAction.End"), OBS_COMBO_TYPE_LIST,
 				    OBS_COMBO_FORMAT_INT);
 	prop_list_add_media_actions(p);
 
 	p = obs_properties_add_int(group, S_MEDIA_ACTION_END_TIME, obs_module_text("MediaAction.Time"), -1000000, 1000000, 100);
-	obs_property_int_set_suffix(p, "ms");
+	obs_property_int_set_suffix(p, " ms");
 	p = obs_properties_add_group(ppts, S_MEDIA_ACTION, obs_module_text("MediaAction"), OBS_GROUP_NORMAL, group);
 	obs_property_set_visible(p, media);
 

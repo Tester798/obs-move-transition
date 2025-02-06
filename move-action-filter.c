@@ -1159,7 +1159,7 @@ static obs_properties_t *move_action_properties(void *data)
 	obs_property_set_modified_callback2(p, move_action_duration_type_changed, data);
 
 	p = obs_properties_add_int(duration, S_DURATION, obs_module_text("CustomDuration"), 0, 10000000, 100);
-	obs_property_int_set_suffix(p, "ms");
+	obs_property_int_set_suffix(p, " ms");
 
 	p = obs_properties_add_group(ppts, S_CUSTOM_DURATION, obs_module_text("Duration"), OBS_GROUP_NORMAL, duration);
 
