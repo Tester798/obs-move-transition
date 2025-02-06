@@ -27,6 +27,7 @@
 #define MOVE_ACTION_UDP_PACKET 9
 #define MOVE_ACTION_WEBSOCKET_REQUEST 10
 #define MOVE_ACTION_WEBSOCKET_EVENT 11
+#define MOVE_ACTION_SOURCE_SYNC_OFFSET 12
 
 #define MOVE_ACTION_ENABLE 0
 #define MOVE_ACTION_DISABLE 1
@@ -54,6 +55,7 @@ struct move_action_action {
 	long long frontend_action;
 	long long enable;
 	long long audio_track;
+	long long sync_offset;
 	char *value_string;
 	long long value_int;
 	double value_float;
@@ -143,7 +145,7 @@ void move_action_update(void *data, obs_data_t *settings)
 
 	if (start_action == MOVE_ACTION_SOURCE_HOTKEY || start_action == MOVE_ACTION_FILTER_ENABLE ||
 	    start_action == MOVE_ACTION_SOURCE_MUTE || start_action == MOVE_ACTION_SOURCE_AUDIO_TRACK ||
-	    start_action == MOVE_ACTION_SETTING) {
+	    start_action == MOVE_ACTION_SETTING || start_action == MOVE_ACTION_SOURCE_SYNC_OFFSET) {
 		const char *source_name = obs_data_get_string(settings, "source");
 		if (!move_action->start_action.source_name || strcmp(source_name, move_action->start_action.source_name) != 0) {
 			bfree(move_action->start_action.source_name);
@@ -158,7 +160,7 @@ void move_action_update(void *data, obs_data_t *settings)
 
 	if (end_action == MOVE_ACTION_SOURCE_HOTKEY || end_action == MOVE_ACTION_FILTER_ENABLE ||
 	    end_action == MOVE_ACTION_SOURCE_MUTE || end_action == MOVE_ACTION_SOURCE_AUDIO_TRACK ||
-	    end_action == MOVE_ACTION_SETTING) {
+	    end_action == MOVE_ACTION_SETTING || end_action == MOVE_ACTION_SOURCE_SYNC_OFFSET) {
 		const char *source_name = obs_data_get_string(settings, "end_source");
 		if (!move_action->end_action.source_name || strcmp(source_name, move_action->end_action.source_name) != 0) {
 			bfree(move_action->end_action.source_name);
@@ -448,6 +450,9 @@ void move_action_update(void *data, obs_data_t *settings)
 
 	move_action->start_action.enable = obs_data_get_int(settings, "enable");
 	move_action->end_action.enable = obs_data_get_int(settings, "end_enable");
+
+	move_action->start_action.sync_offset = obs_data_get_int(settings, "sync_offset");
+	move_action->end_action.sync_offset = obs_data_get_int(settings, "end_sync_offset");
 }
 
 static const char *move_action_get_name(void *type_data)
@@ -878,7 +883,7 @@ static bool move_action_action_changed(obs_properties_t *props, obs_property_t *
 	obs_property_t *setting = obs_properties_get(props, "setting");
 	obs_property_t *hotkey = obs_properties_get(props, "hotkey");
 	if (action == MOVE_ACTION_FILTER_ENABLE || action == MOVE_ACTION_SOURCE_HOTKEY || action == MOVE_ACTION_SOURCE_MUTE ||
-	    action == MOVE_ACTION_SOURCE_AUDIO_TRACK || action == MOVE_ACTION_SETTING) {
+	    action == MOVE_ACTION_SOURCE_AUDIO_TRACK || action == MOVE_ACTION_SETTING || action == MOVE_ACTION_SOURCE_SYNC_OFFSET) {
 		obs_property_list_clear(source);
 		obs_enum_sources(add_source_to_prop_list, source);
 		obs_enum_scenes(add_source_to_prop_list, source);
@@ -907,6 +912,9 @@ static bool move_action_action_changed(obs_properties_t *props, obs_property_t *
 						 action == MOVE_ACTION_SOURCE_MUTE || action == MOVE_ACTION_SOURCE_AUDIO_TRACK ||
 						 (action == MOVE_ACTION_SETTING &&
 						  obs_data_get_int(settings, "setting_type") == OBS_PROPERTY_BOOL));
+
+	obs_property_t *sync_offset = obs_properties_get(props, "sync_offset");
+	obs_property_set_visible(sync_offset, action == MOVE_ACTION_SOURCE_SYNC_OFFSET);
 
 	move_action_setting_changed(NULL, props, property, settings);
 
@@ -946,7 +954,7 @@ static bool move_action_end_action_changed(obs_properties_t *props, obs_property
 	obs_property_t *setting = obs_properties_get(props, "end_setting");
 	obs_property_t *hotkey = obs_properties_get(props, "end_hotkey");
 	if (action == MOVE_ACTION_FILTER_ENABLE || action == MOVE_ACTION_SOURCE_HOTKEY || action == MOVE_ACTION_SOURCE_MUTE ||
-	    action == MOVE_ACTION_SOURCE_AUDIO_TRACK || action == MOVE_ACTION_SETTING) {
+	    action == MOVE_ACTION_SOURCE_AUDIO_TRACK || action == MOVE_ACTION_SETTING || action == MOVE_ACTION_SOURCE_SYNC_OFFSET) {
 		obs_property_list_clear(source);
 		obs_enum_sources(add_source_to_prop_list, source);
 		obs_enum_scenes(add_source_to_prop_list, source);
@@ -975,6 +983,9 @@ static bool move_action_end_action_changed(obs_properties_t *props, obs_property
 						 action == MOVE_ACTION_SOURCE_MUTE || action == MOVE_ACTION_SOURCE_AUDIO_TRACK ||
 						 (action == MOVE_ACTION_SETTING &&
 						  obs_data_get_int(settings, "end_setting_type") == OBS_PROPERTY_BOOL));
+
+	obs_property_t *sync_offset = obs_properties_get(props, "end_sync_offset");
+	obs_property_set_visible(sync_offset, action == MOVE_ACTION_SOURCE_SYNC_OFFSET);
 
 	move_action_end_setting_changed(NULL, props, property, settings);
 
@@ -1057,6 +1068,7 @@ static obs_properties_t *move_action_properties(void *data)
 	obs_property_list_add_int(p, obs_module_text("SourceVisibility"), MOVE_ACTION_SOURCE_VISIBILITY);
 	obs_property_list_add_int(p, obs_module_text("SourceMute"), MOVE_ACTION_SOURCE_MUTE);
 	obs_property_list_add_int(p, obs_module_text("SourceAudioTrack"), MOVE_ACTION_SOURCE_AUDIO_TRACK);
+	obs_property_list_add_int(p, obs_module_text("SourceSyncOffset"), MOVE_ACTION_SOURCE_SYNC_OFFSET);
 	obs_property_list_add_int(p, obs_module_text("SourceHotkey"), MOVE_ACTION_SOURCE_HOTKEY);
 	obs_property_list_add_int(p, obs_module_text("FilterEnable"), MOVE_ACTION_FILTER_ENABLE);
 	obs_property_list_add_int(p, obs_module_text("FrontendHotkey"), MOVE_ACTION_FRONTEND_HOTKEY);
@@ -1116,6 +1128,9 @@ static obs_properties_t *move_action_properties(void *data)
 	obs_property_list_add_int(p, obs_module_text("Disable"), MOVE_ACTION_DISABLE);
 	obs_property_list_add_int(p, obs_module_text("Toggle"), MOVE_ACTION_TOGGLE);
 
+	p = obs_properties_add_int(start_action, "sync_offset", obs_module_text("SyncOffset"), -950, 20000, 1);
+	obs_property_int_set_suffix(p, " ms");
+
 	p = obs_properties_add_list(start_action, "hotkey", obs_module_text("Hotkey"), OBS_COMBO_TYPE_LIST,
 				    OBS_COMBO_FORMAT_STRING);
 
@@ -1171,6 +1186,7 @@ static obs_properties_t *move_action_properties(void *data)
 	obs_property_list_add_int(p, obs_module_text("SourceVisibility"), MOVE_ACTION_SOURCE_VISIBILITY);
 	obs_property_list_add_int(p, obs_module_text("SourceMute"), MOVE_ACTION_SOURCE_MUTE);
 	obs_property_list_add_int(p, obs_module_text("SourceAudioTrack"), MOVE_ACTION_SOURCE_AUDIO_TRACK);
+	obs_property_list_add_int(p, obs_module_text("SourceSyncOffset"), MOVE_ACTION_SOURCE_SYNC_OFFSET);
 	obs_property_list_add_int(p, obs_module_text("SourceHotkey"), MOVE_ACTION_SOURCE_HOTKEY);
 	obs_property_list_add_int(p, obs_module_text("FilterEnable"), MOVE_ACTION_FILTER_ENABLE);
 	obs_property_list_add_int(p, obs_module_text("FrontendHotkey"), MOVE_ACTION_FRONTEND_HOTKEY);
@@ -1229,6 +1245,9 @@ static obs_properties_t *move_action_properties(void *data)
 	obs_property_list_add_int(p, obs_module_text("Enable"), MOVE_ACTION_ENABLE);
 	obs_property_list_add_int(p, obs_module_text("Disable"), MOVE_ACTION_DISABLE);
 	obs_property_list_add_int(p, obs_module_text("Toggle"), MOVE_ACTION_TOGGLE);
+
+	p = obs_properties_add_int(end_action, "end_sync_offset", obs_module_text("SyncOffset"), -950, 20000, 1);
+	obs_property_int_set_suffix(p, " ms");
 
 	p = obs_properties_add_list(end_action, "end_hotkey", obs_module_text("Hotkey"), OBS_COMBO_TYPE_LIST,
 				    OBS_COMBO_FORMAT_STRING);
@@ -1465,6 +1484,14 @@ void move_action_execute(void *data)
 						}
 					}
 				}
+				obs_source_release(source);
+			}
+		}
+	} else if (move_action->action == MOVE_ACTION_SOURCE_SYNC_OFFSET) {
+		if (move_action->source_name && strlen(move_action->source_name)) {
+			obs_source_t *source = obs_get_source_by_name(move_action->source_name);
+			if (source) {
+				obs_source_set_sync_offset(source, move_action->sync_offset * 1000 * 1000);
 				obs_source_release(source);
 			}
 		}
